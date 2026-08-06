@@ -7,8 +7,7 @@ compatibility_flags = ["nodejs_compat"]
 [assets]
 directory = "./public"
 
-# After first deploy, attach the custom domain in the Cloudflare dashboard, or
-# uncomment (requires the vanshul.com zone to be Active on Cloudflare):
-# [[routes]]
-# pattern = "ctx.vanshul.com"
-# custom_domain = true
+# Custom domain — Cloudflare creates the DNS record + cert automatically.
+[[routes]]
+pattern = "ctx.vanshul.com"
+custom_domain = true
