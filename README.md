@@ -44,6 +44,18 @@ docs tools) is an absolute `http(s)` docs page to start crawling from.
 
 Stdio-only clients bridge with `npx mcp-remote https://ctx.vanshul.com/mcp`.
 
+### Add it to your client
+
+- **Cursor** — Settings → MCP → Add new server, or drop this into `~/.cursor/mcp.json`:
+  ```json
+  { "mcpServers": { "ctx": { "url": "https://ctx.vanshul.com/mcp" } } }
+  ```
+- **Claude Desktop** — add the same block to `claude_desktop_config.json` (Settings → Developer → Edit Config). If your version is stdio-only, use:
+  ```json
+  { "mcpServers": { "ctx": { "command": "npx", "args": ["mcp-remote", "https://ctx.vanshul.com/mcp"] } } }
+  ```
+- **Continue / VS Code** — add `ctx` with URL `https://ctx.vanshul.com/mcp` to your MCP servers config.
+
 ## Try it with curl
 
 ```sh
