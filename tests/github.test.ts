@@ -90,4 +90,26 @@ describe('loadRepo', () => {
     const idx = bundle.files.find((f) => f.path === 'src/index.ts');
     expect(idx?.text).toContain('answer = 42');
   });
+
+  it('reads a long path carried in a pax extended header', async () => {
+    const longPath = 'src/' + 'deeply/'.repeat(20) + 'module.ts'; // > 100 chars
+    const gz = await makeTarball({ [longPath]: 'export const deep = true;' });
+    vi.stubGlobal('fetch', vi.fn(async () => tarballResponse(gz)));
+    const bundle = await loadRepo({ owner: 'vanshul', repo: 'demo-long' });
+    expect(bundle.files.map((f) => f.path)).toContain(longPath);
+  });
+
+  it('sends a Bearer token to GitHub when one is provided', async () => {
+    const gz = await makeTarball(FILES);
+    const fetchMock = vi.fn(async () => tarballResponse(gz));
+    vi.stubGlobal('fetch', fetchMock);
+    await loadRepo({ owner: 'vanshul', repo: 'demo-auth' }, {}, 'secret-token');
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>).authorization).toBe('Bearer secret-token');
+  });
+
+  it('surfaces a 401 (bad token) as a RepoError', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('bad', { status: 401 })));
+    await expect(loadRepo({ owner: 'x', repo: 'y' }, {}, 'nope')).rejects.toThrow(RepoError);
+  });
 });

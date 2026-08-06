@@ -35,6 +35,16 @@ describe('packRepo', () => {
     expect(result.tokens).toBeGreaterThan(0);
   });
 
+  it('lists the included files in a manifest header', () => {
+    const result = packRepo(bundle([
+      { path: 'a.ts', text: 'const a = 1;' },
+      { path: 'dir/b.ts', text: 'const b = 2;' },
+    ]));
+    expect(result.text).toContain('# Files (2):');
+    expect(result.text).toContain('#   a.ts');
+    expect(result.text).toContain('#   dir/b.ts');
+  });
+
   it('stops at the token budget and marks truncated', () => {
     const big = 'x'.repeat(4000); // ~1000 tokens each
     const result = packRepo(bundle([

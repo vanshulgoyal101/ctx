@@ -25,7 +25,12 @@ interface ToolDef {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
-  run: (args: Record<string, unknown>) => Promise<string>;
+  run: (args: Record<string, unknown>, ctx: RpcContext) => Promise<string>;
+}
+
+/** Per-request context. `token` is a GitHub token from a Worker secret — never a tool argument. */
+export interface RpcContext {
+  token?: string;
 }
 
 class ToolError extends Error {}
@@ -50,8 +55,8 @@ const TOOLS: ToolDef[] = [
       },
       required: ['repo'],
     },
-    async run(args) {
-      const bundle = await load(args);
+    async run(args, ctx) {
+      const bundle = await load(args, ctx);
       const maxTokens = typeof args.max_tokens === 'number' ? args.max_tokens : undefined;
       const result = packRepo(bundle, { maxTokens });
       const note = result.truncated
@@ -77,11 +82,11 @@ const TOOLS: ToolDef[] = [
       },
       required: ['repo', 'query'],
     },
-    async run(args) {
+    async run(args, ctx) {
       if (typeof args.query !== 'string' || args.query.trim() === '') {
         throw new ToolError('The "query" argument is required and must be a non-empty string.');
       }
-      const bundle = await load(args);
+      const bundle = await load(args, ctx);
       const maxMatches = typeof args.max_matches === 'number' ? args.max_matches : undefined;
       const contextChars = typeof args.context_chars === 'number' ? args.context_chars : undefined;
       const matches = searchFiles(bundle.files, args.query, maxMatches, contextChars);
@@ -97,8 +102,8 @@ const TOOLS: ToolDef[] = [
       properties: { repo: repoProp, ref: refProp, include: globProp, exclude: globProp },
       required: ['repo'],
     },
-    async run(args) {
-      const bundle = await load(args);
+    async run(args, ctx) {
+      const bundle = await load(args, ctx);
       const files = bundle.files.map((f) => ({ path: f.path, bytes: f.bytes }));
       return JSON.stringify({ repo: bundle.slug, ref: bundle.ref, count: files.length, truncated: bundle.truncated, files }, null, 2);
     },
@@ -111,11 +116,11 @@ const TOOLS: ToolDef[] = [
       properties: { repo: repoProp, path: { type: 'string', description: 'File path within the repo.' }, ref: refProp },
       required: ['repo', 'path'],
     },
-    async run(args) {
+    async run(args, ctx) {
       if (typeof args.path !== 'string' || !args.path.trim()) {
         throw new ToolError('The "path" argument is required.');
       }
-      const bundle = await load(args);
+      const bundle = await load(args, ctx);
       const target = args.path.replace(/^\.?\//, '');
       const file = bundle.files.find((f) => f.path === target);
       if (!file) throw new ToolError(`No text file at "${target}" (it may be binary, too large, or excluded).`);
@@ -130,7 +135,7 @@ function toGlobs(value: unknown): string[] | undefined {
   return undefined;
 }
 
-async function load(args: Record<string, unknown>): Promise<RepoBundle> {
+async function load(args: Record<string, unknown>, ctx: RpcContext): Promise<RepoBundle> {
   if (typeof args.repo !== 'string') throw new ToolError('The "repo" argument is required and must be a string.');
   let ref;
   try {
@@ -140,11 +145,11 @@ async function load(args: Record<string, unknown>): Promise<RepoBundle> {
   }
   if (typeof args.ref === 'string' && args.ref.trim()) ref.ref = args.ref.trim();
   const opts: LoadOptions = { include: toGlobs(args.include), exclude: toGlobs(args.exclude) };
-  return loadRepo(ref, opts);
+  return loadRepo(ref, opts, ctx.token);
 }
 
 /** Handle one JSON-RPC message; returns the response object, or null for notifications. */
-export async function handleRpc(message: unknown): Promise<object | null> {
+export async function handleRpc(message: unknown, ctx: RpcContext = {}): Promise<object | null> {
   if (typeof message !== 'object' || message === null || Array.isArray(message)) {
     return err(null, -32600, 'Invalid Request: expected a JSON-RPC object');
   }
@@ -177,7 +182,7 @@ export async function handleRpc(message: unknown): Promise<object | null> {
         const tool = TOOLS.find((t) => t.name === name);
         if (!tool) return err(id, -32602, `Unknown tool: ${name}`);
         try {
-          const text = await tool.run(args);
+          const text = await tool.run(args, ctx);
           return ok(id, { content: [{ type: 'text', text }] });
         } catch (e) {
           const message = e instanceof ToolError || e instanceof RepoError ? e.message : messageOf(e);

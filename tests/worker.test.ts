@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import worker from '../src/worker';
+import { makeTarball, tarballResponse } from './tarball';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function rpc(body: unknown, ip = '203.0.113.1'): Request {
   return new Request('https://ctx.test/mcp', {
@@ -48,6 +53,18 @@ describe('worker routing', () => {
   it('returns 202 for a notification', async () => {
     const res = await worker.fetch(rpc({ jsonrpc: '2.0', method: 'notifications/initialized' }, '203.0.113.4'));
     expect(res.status).toBe(202);
+  });
+
+  it('threads GITHUB_TOKEN from env to GitHub as a Bearer header', async () => {
+    const gz = await makeTarball({ 'README.md': '# hi' });
+    const fetchMock = vi.fn(async () => tarballResponse(gz));
+    vi.stubGlobal('fetch', fetchMock);
+    await worker.fetch(
+      rpc({ jsonrpc: '2.0', id: 9, method: 'tools/call', params: { name: 'list_files', arguments: { repo: 'vanshul/demo' } } }, '203.0.113.8'),
+      { GITHUB_TOKEN: 'env-secret' },
+    );
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect((init.headers as Record<string, string>).authorization).toBe('Bearer env-secret');
   });
 
   it('rate-limits a noisy IP', async () => {

@@ -104,13 +104,13 @@ const CACHE_TTL_MS = 5 * 60_000;
 const CACHE_MAX = 8;
 
 /** Load a repo's text files, using a short-lived per-isolate cache. */
-export async function loadRepo(ref: RepoRef, opts: LoadOptions = {}): Promise<RepoBundle> {
+export async function loadRepo(ref: RepoRef, opts: LoadOptions = {}, token?: string): Promise<RepoBundle> {
   const key = `${ref.owner}/${ref.repo}@${ref.ref ?? 'default'}|${(opts.include ?? []).join(',')}|${(opts.exclude ?? []).join(',')}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.bundle;
 
   const { url } = tarballUrl(ref);
-  const tar = await download(url);
+  const tar = await download(url, token);
   const entries = parseTar(tar);
   const bundle = filterEntries(ref, entries, opts);
 
@@ -124,16 +124,22 @@ function tarballUrl(ref: RepoRef): { url: string } {
   return { url: ref.ref ? `${base}/${encodeURIComponent(ref.ref)}` : base };
 }
 
-async function download(url: string): Promise<Uint8Array> {
+async function download(url: string, token?: string): Promise<Uint8Array> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
+    const headers: Record<string, string> = {
+      'user-agent': USER_AGENT,
+      accept: 'application/vnd.github+json',
+    };
+    if (token) headers.authorization = `Bearer ${token}`;
     const res = await fetch(url, {
-      headers: { 'user-agent': USER_AGENT, accept: 'application/vnd.github+json' },
+      headers,
       redirect: 'follow',
       signal: controller.signal,
     });
     if (res.status === 404) throw new RepoError('Repository or ref not found (is it public?)');
+    if (res.status === 401) throw new RepoError('GitHub rejected the access token');
     if (res.status === 403) throw new RepoError('GitHub rate limit hit — try again shortly');
     if (!res.ok) throw new RepoError(`GitHub returned ${res.status}`);
     if (!res.body) throw new RepoError('Empty response from GitHub');

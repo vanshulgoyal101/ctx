@@ -8,12 +8,17 @@
 
 import { handleRpc, MCP_SERVER_INFO, MCP_TOOL_NAMES } from './mcp';
 
+/** Worker bindings. GITHUB_TOKEN is an optional secret that lifts GitHub's rate limit. */
+export interface Env {
+  GITHUB_TOKEN?: string;
+}
+
 const RATE_LIMIT = 30; // requests
 const RATE_WINDOW_MS = 60_000; // per minute, per IP
 const hits = new Map<string, number[]>();
 
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: Env = {}): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -25,14 +30,14 @@ export default {
     }
 
     if (url.pathname === '/mcp') {
-      return handleMcp(request);
+      return handleMcp(request, env);
     }
 
     return new Response('Not found', { status: 404 });
   },
 };
 
-async function handleMcp(request: Request): Promise<Response> {
+async function handleMcp(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return json(405, rpcError(null, -32600, 'Use POST to send JSON-RPC messages'));
   }
@@ -49,13 +54,15 @@ async function handleMcp(request: Request): Promise<Response> {
     return json(400, rpcError(null, -32700, 'Parse error: body is not valid JSON'));
   }
 
+  const ctx = { token: env.GITHUB_TOKEN };
+
   if (Array.isArray(payload)) {
-    const responses = (await Promise.all(payload.map((m) => handleRpc(m)))).filter(Boolean);
+    const responses = (await Promise.all(payload.map((m) => handleRpc(m, ctx)))).filter(Boolean);
     if (responses.length === 0) return new Response(null, { status: 202, headers: corsHeaders() });
     return json(200, responses);
   }
 
-  const response = await handleRpc(payload);
+  const response = await handleRpc(payload, ctx);
   if (!response) return new Response(null, { status: 202, headers: corsHeaders() });
   return json(200, response);
 }
