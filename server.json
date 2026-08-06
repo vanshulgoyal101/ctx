@@ -1,0 +1,17 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.json",
+  "name": "io.github.vanshulgoyal101/ctx",
+  "description": "Turn a GitHub repo or docs site into agent-ready context: pack it into one token-counted blob, or search it for just the relevant passages (with file/line). Agent-first alternative to gitingest/repomix.",
+  "version": "1.0.0",
+  "repository": {
+    "url": "https://github.com/vanshulgoyal101/ctx",
+    "source": "github"
+  },
+  "websiteUrl": "https://ctx.vanshul.com",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://ctx.vanshul.com/mcp"
+    }
+  ]
+}
