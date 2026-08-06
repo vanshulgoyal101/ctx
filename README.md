@@ -1,13 +1,15 @@
 # ctx.vanshul.com
 
 A public **Model Context Protocol (MCP)** server, running as a Cloudflare
-Worker, that turns a **GitHub repository into agent-ready context**. Point an AI
-agent at it and it can pack a whole repo into one token-counted blob — or search
-the repo and get back only the relevant passages, each with its file and line.
+Worker, that turns a **GitHub repository or a documentation site into agent-ready
+context**. Point an AI agent at it and it can pack a whole repo (or crawl a docs
+site) into one token-counted blob — or search it and get back only the relevant
+passages, each with its file/URL and line.
 
-It's the agent-first companion to [`mcp/`](../mcp): where `mcp` reads the live
-web, `ctx` reads code. Zero runtime dependencies — the tarball is fetched,
-gunzipped and parsed in-process.
+It's the agent-first companion to [`mcp/`](../mcp): where `mcp` reads a single
+web page, `ctx` reads whole repos and doc sites. The repo pipeline fetches,
+gunzips and parses the tarball in-process; docs extraction reuses Mozilla
+Readability + Turndown.
 
 ## Endpoint
 
@@ -24,8 +26,11 @@ GET  https://ctx.vanshul.com/health  # { ok: true, tools: [...] }
 | `search_context` | `{ repo, query, ref?, include?, exclude?, max_matches?, context_chars? }` | Only the passages matching `query`, each with file, line and score |
 | `list_files` | `{ repo, ref?, include?, exclude? }` | JSON: the text files ctx would include, with byte sizes |
 | `get_file` | `{ repo, path, ref? }` | The full text of a single file |
+| `pack_docs` | `{ url, depth?, max_pages?, max_tokens? }` | A crawled docs site as one context blob (each page → Markdown) |
+| `search_docs` | `{ url, query, depth?, max_pages?, max_matches?, context_chars? }` | Only the docs passages matching `query`, each with page URL, line and score |
 
-`repo` is `owner/repo`, `owner/repo/ref`, or a `github.com` URL.
+`repo` is `owner/repo`, `owner/repo/ref`, or a `github.com` URL. `url` (for the
+docs tools) is an absolute `http(s)` docs page to start crawling from.
 
 ## Connect from an MCP client
 
@@ -55,10 +60,14 @@ curl -s https://ctx.vanshul.com/mcp -H 'content-type: application/json' \
 ctx/
 ├── src/
 │   ├── worker.ts     # entry: routes /mcp, /health, rate limit, CORS
-│   ├── mcp.ts        # JSON-RPC dispatch + the four tool definitions
+│   ├── mcp.ts        # JSON-RPC dispatch + the six tool definitions
 │   ├── github.ts     # fetch tarball, gunzip, parse tar, filter files (no deps)
 │   ├── pack.ts       # assemble the context blob + token estimate
-│   └── search.ts     # ranked passage search over files (file + line)
+│   ├── search.ts     # ranked passage search over files (file + line)
+│   ├── docs.ts       # crawl a docs site into pages (BFS, same-section)
+│   ├── extract.ts    # HTML -> Markdown / links (Readability + Turndown)
+│   ├── fetcher.ts    # bounded fetch with re-validated redirects (SSRF)
+│   └── security.ts   # SSRF guard (block private/internal addresses)
 ├── public/
 │   ├── index.html    # landing page (served for non-API paths)
 │   ├── og.png / og.svg
@@ -90,9 +99,11 @@ owner/repo → github.com tarball → DecompressionStream('gzip')
            → pack (concat + token estimate) OR search (ranked passages)
 ```
 
-The GitHub URL is always constructed from a fixed `owner/repo` slug, so there is
-no SSRF surface. Downloads are bounded (timeout, uncompressed size cap, per-file
-and file-count caps) and results are cached per-isolate for a few minutes.
+The GitHub URL is always constructed from a fixed `owner/repo` slug, so the repo
+tools have no SSRF surface. The docs tools fetch caller-supplied URLs, so every
+URL and redirect hop is re-validated against the SSRF guard. Downloads are
+bounded (timeout, size caps, page/file-count caps) and results are cached
+per-isolate for a few minutes.
 
 ## Security & limits
 

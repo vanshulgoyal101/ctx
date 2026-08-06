@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handleRpc, MCP_SERVER_INFO, MCP_TOOL_NAMES } from '../src/mcp';
 import { makeTarball, tarballResponse } from './tarball';
+import { buildSite } from './site';
 
 const FILES = {
   'README.md': '# Demo\n\nThis app handles authentication and sessions.',
@@ -28,7 +29,7 @@ describe('handleRpc — protocol', () => {
   it('lists the four tools', async () => {
     const res = (await handleRpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' })) as any;
     expect(res.result.tools.map((t: { name: string }) => t.name)).toEqual(MCP_TOOL_NAMES);
-    expect(MCP_TOOL_NAMES).toEqual(['pack_repo', 'search_context', 'list_files', 'get_file']);
+    expect(MCP_TOOL_NAMES).toEqual(['pack_repo', 'search_context', 'list_files', 'get_file', 'pack_docs', 'search_docs']);
   });
 
   it('returns null for notifications', async () => {
@@ -109,5 +110,39 @@ describe('handleRpc — tools/call', () => {
       params: { name: 'search_context', arguments: { repo: 'vanshul/demo', query: '' } },
     })) as any;
     expect(res.result.isError).toBe(true);
+  });
+
+  it('pack_docs crawls a site and returns a docs bundle', async () => {
+    const { base, fetchImpl } = buildSite('mcp1.example');
+    vi.stubGlobal('fetch', fetchImpl);
+    const res = (await handleRpc({
+      jsonrpc: '2.0', id: 11, method: 'tools/call',
+      params: { name: 'pack_docs', arguments: { url: `${base}/docs/`, depth: 1 } },
+    })) as any;
+    const text: string = res.result.content[0].text;
+    expect(res.result.isError).toBeUndefined();
+    expect(text).toContain(`# Docs: ${base}/docs/`);
+    expect(text).toContain(`==== ${base}/docs/a ====`);
+  });
+
+  it('search_docs returns ranked passages from a site', async () => {
+    const { base, fetchImpl } = buildSite('mcp2.example');
+    vi.stubGlobal('fetch', fetchImpl);
+    const res = (await handleRpc({
+      jsonrpc: '2.0', id: 12, method: 'tools/call',
+      params: { name: 'search_docs', arguments: { url: `${base}/docs/`, query: 'separator option' } },
+    })) as any;
+    const payload = JSON.parse(res.result.content[0].text);
+    expect(payload.count).toBeGreaterThan(0);
+    expect(payload.matches[0].path).toContain('/docs/b');
+  });
+
+  it('pack_docs refuses a private start URL', async () => {
+    const res = (await handleRpc({
+      jsonrpc: '2.0', id: 13, method: 'tools/call',
+      params: { name: 'pack_docs', arguments: { url: 'http://127.0.0.1/docs' } },
+    })) as any;
+    expect(res.result.isError).toBe(true);
+    expect(res.result.content[0].text).toMatch(/private or reserved|local or internal/i);
   });
 });

@@ -47,7 +47,7 @@ describe('worker routing', () => {
   it('handles tools/list end to end', async () => {
     const res = await worker.fetch(rpc({ jsonrpc: '2.0', id: 1, method: 'tools/list' }, '203.0.113.3'));
     expect(res.status).toBe(200);
-    expect((await res.json()).result.tools.length).toBe(4);
+    expect((await res.json()).result.tools.length).toBe(6);
   });
 
   it('returns 202 for a notification', async () => {

@@ -62,6 +62,35 @@ Output JSON: `{ repo, ref, count, truncated, files: [{ path, bytes }] }`.
 `{ repo, path, ref? }` → the full text of that file, or an `isError` result if
 it's missing, binary, too large, or excluded.
 
+### `pack_docs`
+Crawl a documentation site and return it as one context blob.
+
+| Argument | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `url` | string | yes | — | Absolute `http(s)` URL to start crawling from. |
+| `depth` | number | no | 1 | Link hops to follow (0–3). |
+| `max_pages` | number | no | 10 | Pages to fetch (1–30). |
+| `max_tokens` | number | no | — | Stop adding pages once the estimate exceeds this. |
+
+The crawl stays within the start URL's **origin and top section** (e.g. everything
+under `/docs`). Each page is extracted to Markdown; pages with no readable content
+are skipped but still contribute links. Output: a header (start URL + page
+manifest) then one `==== <page url> ====` section per page.
+
+### `search_docs`
+Crawl a docs site and return only the passages matching a query.
+
+| Argument | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `url` | string | yes | — | Start URL. |
+| `query` | string | yes | — | Space-separated terms, case-insensitive. |
+| `depth` / `max_pages` | number | no | 1 / 10 | As above. |
+| `max_matches` | number | no | 5 | 1–50. |
+| `context_chars` | number | no | 500 | Per-passage budget, 80–4000. |
+
+Output JSON: `{ startUrl, query, count, matches: [{ path, line, snippet, score }] }`
+where `path` is the page URL.
+
 ## Errors
 
 - **Protocol errors** use JSON-RPC codes: `-32700` parse, `-32600` invalid request,

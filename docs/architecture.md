@@ -33,6 +33,10 @@ flowchart TD
 | `github.ts` | Fetch the repo tarball, gunzip, parse the tar in-process, filter files; short-lived cache. |
 | `pack.ts` | Concatenate files into one blob with headers; token estimate + budget. |
 | `search.ts` | Rank passages (blocks of non-blank lines) against a query, with file + line. |
+| `docs.ts` | Crawl a docs site (BFS, same origin + section) into pages; pack/search over them. |
+| `extract.ts` | HTML → Markdown / links via linkedom + Mozilla Readability + Turndown. |
+| `fetcher.ts` | Bounded fetch for the docs tools: timeout, size cap, re-validated redirects. |
+| `security.ts` | SSRF guard (`validateTargetUrl`) for caller-supplied docs URLs. |
 
 ## Loading a repo
 
@@ -61,6 +65,20 @@ so `list_files` → `search_context` → `get_file` on the same repo fetch once.
   and returns the top matches with `path`, `line` and `score`.
 
 Token estimate is the standard ~4-chars-per-token heuristic — labelled an estimate.
+
+## Crawling docs (`pack_docs` / `search_docs`)
+
+`crawlDocs` does a breadth-first crawl from a start URL, staying within the same
+origin and the start path's top section (e.g. `/docs`). Each page is fetched with
+the SSRF-safe `fetcher` and extracted with `extract` (Readability + Turndown);
+pages with no readable content are skipped but still contribute links. The crawl
+is bounded by `depth` (≤3), `max_pages` (≤30), per-page size, and a 5-minute
+per-isolate cache. Because docs URLs are caller-supplied, every URL and redirect
+hop is re-validated against the SSRF guard — unlike the repo tools, whose URL is
+always a fixed `owner/repo` slug.
+
+> Dependencies: the repo pipeline is dependency-free; docs extraction pulls in
+> `linkedom`, `@mozilla/readability` and `turndown` (the same stack as `mcp`).
 
 ## Limits
 

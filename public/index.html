@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0b0c11">
-<title>ctx — Turn a GitHub Repo into Agent-Ready Context (MCP) | ctx.vanshul.com</title>
-<meta name="description" content="Free public MCP server that turns a GitHub repo into agent-ready context: pack a whole repo into one token-counted blob, or search it and get just the relevant passages with file + line. Works with Claude, Cursor, Continue. No API key.">
-<meta name="keywords" content="repo to context, GitHub to LLM, MCP server, Model Context Protocol, repomix, gitingest, repomix mcp, gitingest alternative, repomix alternative, code context for AI, pack repository, agent context, Claude MCP, Cursor MCP, codebase to prompt">
+<title>ctx — Turn a GitHub Repo or Docs Site into Agent-Ready Context (MCP) | ctx.vanshul.com</title>
+<meta name="description" content="Free public MCP server that turns a GitHub repo or a docs site into agent-ready context: pack a whole repo/site into one token-counted blob, or search it and get just the relevant passages with file + line. Works with Claude, Cursor, Continue. No API key.">
+<meta name="keywords" content="repo to context, docs to context, GitHub to LLM, docs to markdown, MCP server, Model Context Protocol, repomix, gitingest, repomix mcp, gitingest alternative, repomix alternative, code context for AI, pack repository, crawl docs for LLM, agent context, Claude MCP, Cursor MCP, codebase to prompt">
 <meta name="author" content="Vanshul">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://ctx.vanshul.com/">
@@ -80,7 +80,9 @@
         "pack_repo — a whole GitHub repo as one token-counted context blob",
         "search_context — only the passages matching a query, with file + line",
         "list_files — the files ctx would include, with sizes",
-        "get_file — the full text of a single file by path"
+        "get_file — the full text of a single file by path",
+        "pack_docs — crawl a docs site into one agent-ready context blob",
+        "search_docs — only the docs passages matching a query, with page URL"
       ],
       "author": { "@id": "https://ctx.vanshul.com/#person" }
     },
@@ -110,7 +112,7 @@
         {
           "@type": "Question",
           "name": "What tools does it expose?",
-          "acceptedAnswer": { "@type": "Answer", "text": "Four: pack_repo (repo as one context blob, with include/exclude globs and a max_tokens budget), search_context (ranked passages matching a query, with file and line), list_files and get_file." }
+          "acceptedAnswer": { "@type": "Answer", "text": "Six: pack_repo (repo as one context blob, with include/exclude globs and a max_tokens budget), search_context (ranked passages matching a query, with file and line), list_files, get_file, plus pack_docs and search_docs which do the same for a documentation site by crawling it." }
         }
       ]
     }
@@ -122,7 +124,7 @@
 <div class="wrap">
   <header>
     <h1>📦 ctx.vanshul.com</h1>
-    <p class="tag">A public <b>Model Context Protocol</b> server that turns a <b>GitHub repo into agent-ready context</b> — pack it, or search it for just the relevant lines.</p>
+    <p class="tag">A public <b>Model Context Protocol</b> server that turns a <b>GitHub repo or docs site into agent-ready context</b> — pack it, or search it for just the relevant lines.</p>
     <div class="endpoint">https://ctx.vanshul.com/mcp</div>
   </header>
 
@@ -132,6 +134,8 @@
     <div class="tool"><b>search_context</b> — return only the passages matching a query, each with its file path, line number and a relevance score. Token-efficient way to answer "where is X handled?".</div>
     <div class="tool"><b>list_files</b> — the text files ctx would include (after stripping noise), with byte sizes.</div>
     <div class="tool"><b>get_file</b> — the full text of a single file by path.</div>
+    <div class="tool"><b>pack_docs</b> — crawl a documentation site from a start URL and return each page as clean Markdown, concatenated into one context blob (bounded by depth and page count).</div>
+    <div class="tool"><b>search_docs</b> — crawl a docs site and return only the passages matching a query, each with its page URL and a relevance score.</div>
   </div>
 
   <h2>Connect it</h2>

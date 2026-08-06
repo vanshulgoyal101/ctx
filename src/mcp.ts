@@ -10,6 +10,7 @@
 import { loadRepo, parseRepoSlug, RepoError, type LoadOptions, type RepoBundle } from './github';
 import { packRepo } from './pack';
 import { searchFiles } from './search';
+import { crawlDocs, packDocs, DocsError } from './docs';
 
 const PROTOCOL_VERSION = '2025-06-18';
 const SERVER = { name: 'vanshul-ctx', version: '1.0.0' };
@@ -127,7 +128,72 @@ const TOOLS: ToolDef[] = [
       return file.text;
     },
   },
+  {
+    name: 'pack_docs',
+    description:
+      'Crawl a documentation site from a start URL and return it as one agent-ready context blob: each page extracted to clean Markdown, concatenated with its URL. Stays within the same site section; bounded by depth and page count. Use max_tokens to fit a budget.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The absolute http(s) URL to start crawling from (e.g. a docs index).' },
+        depth: { type: 'number', description: 'How many link hops to follow (0–3, default 1).' },
+        max_pages: { type: 'number', description: 'Max pages to fetch (1–30, default 10).' },
+        max_tokens: { type: 'number', description: 'Stop adding pages once the estimate exceeds this many tokens.' },
+      },
+      required: ['url'],
+    },
+    async run(args) {
+      if (typeof args.url !== 'string') throw new ToolError('The "url" argument is required and must be a string.');
+      const bundle = await crawl(args);
+      const maxTokens = typeof args.max_tokens === 'number' ? args.max_tokens : undefined;
+      const result = packDocs(bundle, maxTokens);
+      if (result.pages === 0) return 'No readable pages were found at that URL.';
+      const note = result.truncated
+        ? `\n\n(Truncated: included ${result.pages} of ${result.totalPages} crawled pages, ~${result.tokens} tokens.)`
+        : '';
+      return result.text + note;
+    },
+  },
+  {
+    name: 'search_docs',
+    description:
+      'Crawl a documentation site and return only the passages that match a query — each with its page URL, line and a relevance score. Token-efficient way to answer a question from docs without packing the whole site.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        url: { type: 'string', description: 'The absolute http(s) URL to start crawling from.' },
+        query: { type: 'string', description: 'Space-separated search terms; matching is case-insensitive.' },
+        depth: { type: 'number', description: 'How many link hops to follow (0–3, default 1).' },
+        max_pages: { type: 'number', description: 'Max pages to fetch (1–30, default 10).' },
+        max_matches: { type: 'number', description: 'Max passages to return (1–50, default 5).' },
+        context_chars: { type: 'number', description: 'Per-passage character budget (80–4000, default 500).' },
+      },
+      required: ['url', 'query'],
+    },
+    async run(args) {
+      if (typeof args.url !== 'string') throw new ToolError('The "url" argument is required and must be a string.');
+      if (typeof args.query !== 'string' || args.query.trim() === '') {
+        throw new ToolError('The "query" argument is required and must be a non-empty string.');
+      }
+      const bundle = await crawl(args);
+      const pages = bundle.pages.map((p) => ({ path: p.url, text: p.markdown }));
+      const maxMatches = typeof args.max_matches === 'number' ? args.max_matches : undefined;
+      const contextChars = typeof args.context_chars === 'number' ? args.context_chars : undefined;
+      const matches = searchFiles(pages, args.query, maxMatches, contextChars);
+      return JSON.stringify({ startUrl: bundle.startUrl, query: args.query, count: matches.length, matches }, null, 2);
+    },
+  },
 ];
+
+async function crawl(args: Record<string, unknown>) {
+  const depth = typeof args.depth === 'number' ? args.depth : undefined;
+  const maxPages = typeof args.max_pages === 'number' ? args.max_pages : undefined;
+  try {
+    return await crawlDocs(args.url as string, { depth, maxPages });
+  } catch (e) {
+    throw e instanceof DocsError ? new ToolError(e.message) : e;
+  }
+}
 
 function toGlobs(value: unknown): string[] | undefined {
   if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
