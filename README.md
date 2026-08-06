@@ -98,7 +98,18 @@ and file-count caps) and results are cached per-isolate for a few minutes.
 
 - **No SSRF:** input is a repo slug, not an arbitrary URL; only github.com is fetched.
 - **Bounded:** 20s download timeout, ~60 MB uncompressed cap, 512 KB/file, ≤3000 files, per-IP rate limit.
-- **Stateless & private:** public repos only, no code stored, no LLM in the loop.
+- **Stateless & private:** no code stored, no LLM in the loop; public repos by default (private with a token).
+
+## Authentication (optional)
+
+Set a `GITHUB_TOKEN` Worker secret to lift GitHub's rate limit (60 → 5,000/hour) and
+read private repos:
+
+```sh
+wrangler secret put GITHUB_TOKEN
+```
+
+The token is a Worker secret only — never a tool argument — so it can't leak to an agent.
 
 ## Documentation
 

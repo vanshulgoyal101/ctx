@@ -53,8 +53,9 @@ so `list_files` → `search_context` → `get_file` on the same repo fetch once.
 
 ## Packing & searching
 
-- `packRepo` writes a header then one `==== path ====` section per file, stopping
-  when the running token estimate exceeds `max_tokens` (always includes ≥1 file).
+- `packRepo` writes a header (with a manifest of the included file paths) then one
+  `==== path ====` section per file, stopping when the running token estimate
+  exceeds `max_tokens` (always includes ≥1 file).
 - `searchFiles` splits each file into blocks (runs of non-blank lines), scores by
   case-insensitive term frequency, windows each snippet around the first match,
   and returns the top matches with `path`, `line` and `score`.
@@ -71,3 +72,10 @@ Token estimate is the standard ~4-chars-per-token heuristic — labelled an esti
 | Per-file cap | 512 KB | `github.ts` |
 | File-count cap | 3000 | `github.ts` |
 | Cache TTL | 5 min/isolate | `github.ts` |
+
+## Authentication
+
+An optional `GITHUB_TOKEN` Worker secret is read from `env` and threaded through
+`handleRpc` → `loadRepo` → the GitHub request as `Authorization: Bearer`. It lifts
+GitHub's rate limit (and enables private repos). It is only ever a Worker secret —
+never a tool argument — so it cannot be surfaced to an agent.

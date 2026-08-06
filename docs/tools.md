@@ -38,8 +38,9 @@ Return the repo as one context blob.
 | `include` / `exclude` | string[] | no | Globs. |
 | `max_tokens` | number | no | Stop adding files once the estimate exceeds this. |
 
-Output: a text blob — a header (`# Repository: owner/repo@ref`, file count) then
-one `==== path ====` section per file, with a truncation note if capped.
+Output: a text blob — a header (`# Repository: owner/repo@ref`, a file manifest of
+the included paths) then one `==== path ====` section per file, with a truncation
+note if capped by `max_tokens`.
 
 ### `search_context`
 Return only the passages matching a query.
