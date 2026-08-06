@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0b0c11">
 <title>ctx — Turn a GitHub Repo into Agent-Ready Context (MCP) | ctx.vanshul.com</title>
 <meta name="description" content="Free public MCP server that turns a GitHub repo into agent-ready context: pack a whole repo into one token-counted blob, or search it and get just the relevant passages with file + line. Works with Claude, Cursor, Continue. No API key.">
-<meta name="keywords" content="repo to context, GitHub to LLM, MCP server, Model Context Protocol, repomix, gitingest, code context for AI, pack repository, agent context, Claude MCP, Cursor MCP, codebase to prompt">
+<meta name="keywords" content="repo to context, GitHub to LLM, MCP server, Model Context Protocol, repomix, gitingest, repomix mcp, gitingest alternative, repomix alternative, code context for AI, pack repository, agent context, Claude MCP, Cursor MCP, codebase to prompt">
 <meta name="author" content="Vanshul">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <link rel="canonical" href="https://ctx.vanshul.com/">
@@ -161,6 +161,18 @@ curl -s https://ctx.vanshul.com/mcp -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
        "params":{"name":"search_context",
                  "arguments":{"repo":"sindresorhus/slugify","query":"replace separator"}}}'</pre>
+  </div>
+
+  <h2>ctx vs gitingest &amp; repomix</h2>
+  <div class="card">
+    <p><b>gitingest</b> and <b>repomix</b> are great at packing a repo into one blob for a human to paste. ctx is built for <b>agents</b>:</p>
+    <ul>
+      <li><b>Agent-first</b> — ctx is an <b>MCP server</b> your AI client calls directly (no copy-paste), not a website or CLI.</li>
+      <li><b>Ranked search, not just packing</b> — <code>search_context</code> returns only the passages matching a query, with file + line, so an agent spends a fraction of the tokens.</li>
+      <li><b>Token budget built in</b> — <code>max_tokens</code> + a file manifest keep the blob inside a context window.</li>
+      <li><b>Zero setup</b> — a hosted endpoint, no install; free for public repos.</li>
+    </ul>
+    <p>Looking for a <b>gitingest alternative</b> or <b>repomix MCP server</b>? That's exactly what ctx is.</p>
   </div>
 
   <h2>Use cases</h2>
