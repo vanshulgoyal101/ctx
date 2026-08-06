@@ -1,5 +1,9 @@
 # ctx.vanshul.com
 
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.github.vanshulgoyal101%2Fctx-a78bfa)](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.vanshulgoyal101/ctx)
+[![Endpoint](https://img.shields.io/badge/endpoint-ctx.vanshul.com%2Fmcp-34d399)](https://ctx.vanshul.com/mcp)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+
 A public **Model Context Protocol (MCP)** server, running as a Cloudflare
 Worker, that turns a **GitHub repository or a documentation site into agent-ready
 context**. Point an AI agent at it and it can pack a whole repo (or crawl a docs
