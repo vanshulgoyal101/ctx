@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b0c11">
+<title>ctx — Turn a GitHub Repo into Agent-Ready Context (MCP) | ctx.vanshul.com</title>
+<meta name="description" content="Free public MCP server that turns a GitHub repo into agent-ready context: pack a whole repo into one token-counted blob, or search it and get just the relevant passages with file + line. Works with Claude, Cursor, Continue. No API key.">
+<meta name="keywords" content="repo to context, GitHub to LLM, MCP server, Model Context Protocol, repomix, gitingest, code context for AI, pack repository, agent context, Claude MCP, Cursor MCP, codebase to prompt">
+<meta name="author" content="Vanshul">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://ctx.vanshul.com/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ctx.vanshul.com">
+<meta property="og:url" content="https://ctx.vanshul.com/">
+<meta property="og:title" content="ctx — Turn a GitHub Repo into Agent-Ready Context">
+<meta property="og:description" content="A free public MCP server that packs a GitHub repo into one token-counted context blob, or searches it and returns just the relevant passages. For Claude, Cursor, Continue.">
+<meta property="og:image" content="https://ctx.vanshul.com/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ctx.vanshul.com — turn a GitHub repo into agent-ready context">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ctx — Turn a GitHub Repo into Agent-Ready Context">
+<meta name="twitter:description" content="Free public MCP server: pack a GitHub repo into agent-ready context, or search it for just the relevant passages. For Claude, Cursor, Continue.">
+<meta name="twitter:image" content="https://ctx.vanshul.com/og.png">
+<meta name="twitter:image:alt" content="ctx.vanshul.com — turn a GitHub repo into agent-ready context">
+<style>
+  :root{--bg:#0b0c11;--panel:#14151d;--panel-2:#191b24;--line:#262a36;--text:#f2f4f9;--muted:#949cb0;--accent:#a78bfa;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#171826,var(--bg));color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:0 18px 60px}
+  .wrap{max-width:760px;margin:0 auto}
+  header{text-align:center;padding:56px 0 20px}
+  h1{margin:0;font-size:clamp(1.8rem,6vw,2.6rem);letter-spacing:-.02em}
+  .tag{color:var(--muted);font-size:1.05rem}
+  .endpoint{display:inline-block;margin-top:14px;font-family:var(--mono);background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 16px;color:var(--accent)}
+  h2{margin:34px 0 10px;font-size:1.2rem}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0}
+  code,pre{font-family:var(--mono)}
+  pre{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow:auto;font-size:.85rem}
+  .tool{border-left:3px solid var(--accent);padding-left:12px;margin:10px 0}
+  .tool b{color:var(--accent)}
+  a{color:var(--accent)}
+  footer{text-align:center;color:var(--muted);margin-top:40px;font-size:.85rem}
+  ul{padding-left:20px}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://ctx.vanshul.com/#website",
+      "url": "https://ctx.vanshul.com/",
+      "name": "ctx — repo to agent context",
+      "description": "A public Model Context Protocol server that turns a GitHub repo into agent-ready context.",
+      "publisher": { "@id": "https://ctx.vanshul.com/#person" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://ctx.vanshul.com/#person",
+      "name": "Vanshul",
+      "url": "https://vanshul.com"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "ctx — repo to agent context",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any (remote HTTP)",
+      "url": "https://ctx.vanshul.com/",
+      "description": "A public Model Context Protocol (MCP) server that turns a GitHub repository into agent-ready context: pack it into one token-counted blob, or search it for just the relevant passages with file and line.",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "featureList": [
+        "pack_repo — a whole GitHub repo as one token-counted context blob",
+        "search_context — only the passages matching a query, with file + line",
+        "list_files — the files ctx would include, with sizes",
+        "get_file — the full text of a single file by path"
+      ],
+      "author": { "@id": "https://ctx.vanshul.com/#person" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is ctx?",
+          "acceptedAnswer": { "@type": "Answer", "text": "A free, public Model Context Protocol (MCP) server that turns a GitHub repository into agent-ready context. Point an AI agent at it and it can pack a repo into one token-counted blob or search it for just the relevant passages." }
+        },
+        {
+          "@type": "Question",
+          "name": "How is it different from gitingest or repomix?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Those pack a repo into one blob for humans. ctx is agent-first: it is an MCP server AI agents call directly, and it adds ranked search_context so an agent gets only the relevant files/lines instead of the whole repo — spending a fraction of the tokens." }
+        },
+        {
+          "@type": "Question",
+          "name": "Which clients can use it?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Any client that supports remote / Streamable-HTTP MCP servers, including Claude Desktop, Cursor and Continue. Point it at https://ctx.vanshul.com/mcp, or bridge stdio-only clients with npx mcp-remote." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does it need an API key or store my code?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No key for public repos, and no code is stored. It fetches the repo tarball, strips binaries, lockfiles and build directories, and returns text — deterministically, with no LLM in the loop." }
+        },
+        {
+          "@type": "Question",
+          "name": "What tools does it expose?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Four: pack_repo (repo as one context blob, with include/exclude globs and a max_tokens budget), search_context (ranked passages matching a query, with file and line), list_files and get_file." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📦 ctx.vanshul.com</h1>
+    <p class="tag">A public <b>Model Context Protocol</b> server that turns a <b>GitHub repo into agent-ready context</b> — pack it, or search it for just the relevant lines.</p>
+    <div class="endpoint">https://ctx.vanshul.com/mcp</div>
+  </header>
+
+  <h2>Tools</h2>
+  <div class="card">
+    <div class="tool"><b>pack_repo</b> — fetch a repo and return it as one context blob: files concatenated with clear <code>==== path ====</code> headers, binaries/lockfiles/build dirs stripped, with a token estimate. Use <code>include</code>/<code>exclude</code> globs and <code>max_tokens</code>.</div>
+    <div class="tool"><b>search_context</b> — return only the passages matching a query, each with its file path, line number and a relevance score. Token-efficient way to answer "where is X handled?".</div>
+    <div class="tool"><b>list_files</b> — the text files ctx would include (after stripping noise), with byte sizes.</div>
+    <div class="tool"><b>get_file</b> — the full text of a single file by path.</div>
+  </div>
+
+  <h2>Connect it</h2>
+  <div class="card">
+    <p>Add it to any MCP client that supports remote / Streamable-HTTP servers:</p>
+    <pre>{
+  "mcpServers": {
+    "ctx": {
+      "url": "https://ctx.vanshul.com/mcp"
+    }
+  }
+}</pre>
+    <p>For clients that only speak stdio, bridge with <a href="https://github.com/modelcontextprotocol/servers">mcp-remote</a>:</p>
+    <pre>npx mcp-remote https://ctx.vanshul.com/mcp</pre>
+  </div>
+
+  <h2>Try it with curl</h2>
+  <div class="card">
+    <pre># Pack a repo (capped to 8000 tokens)
+curl -s https://ctx.vanshul.com/mcp -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call",
+       "params":{"name":"pack_repo",
+                 "arguments":{"repo":"sindresorhus/slugify","max_tokens":8000}}}'
+
+# Search a repo for just the relevant passages
+curl -s https://ctx.vanshul.com/mcp -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call",
+       "params":{"name":"search_context",
+                 "arguments":{"repo":"sindresorhus/slugify","query":"replace separator"}}}'</pre>
+  </div>
+
+  <h2>Use cases</h2>
+  <div class="card">
+    <ul>
+      <li><b>Give an agent a whole codebase</b> — let Claude, Cursor or Continue load a repo as context in one call instead of you pasting 40 files.</li>
+      <li><b>Answer a question about a repo cheaply</b> — <code>search_context</code> returns the relevant files/lines, not 200k tokens.</li>
+      <li><b>Focus with globs</b> — <code>include: ["src/**"]</code> / <code>exclude: ["**/test/**"]</code> to pack exactly what matters.</li>
+      <li><b>Fit a budget</b> — <code>max_tokens</code> caps the blob so it drops cleanly into a context window.</li>
+    </ul>
+  </div>
+
+  <h2>FAQ</h2>
+  <div class="card">
+    <p><b>What is ctx?</b><br>A free, public MCP server that turns a GitHub repo into agent-ready context — pack it into one token-counted blob, or search it for just the relevant passages.</p>
+    <p><b>How is it different from gitingest / repomix?</b><br>Those pack a repo for humans. ctx is <b>agent-first</b> (an MCP server agents call directly) and adds <b>ranked <code>search_context</code></b> so an agent gets only the relevant files/lines — a fraction of the tokens.</p>
+    <p><b>Which clients can use it?</b><br>Any remote / Streamable-HTTP MCP client — Claude Desktop, Cursor, Continue. Point it at <code>https://ctx.vanshul.com/mcp</code>, or bridge stdio-only clients with <code>npx mcp-remote</code>.</p>
+    <p><b>Does it need a key or store my code?</b><br>No key for public repos, and nothing is stored. It strips binaries, lockfiles and build dirs and returns text deterministically — no LLM in the loop.</p>
+    <p><b>What tools does it expose?</b><br><code>pack_repo</code>, <code>search_context</code>, <code>list_files</code> and <code>get_file</code>.</p>
+  </div>
+
+  <footer>
+    Built by <a href="https://vanshul.com">Vanshul</a> ·
+    <a href="https://links.vanshul.com">more projects</a> ·
+    sibling of <a href="https://mcp.vanshul.com">mcp.vanshul.com</a>
+  </footer>
+</div>
+<script defer src="https://vanshul.com/a.js" data-site="ctx"></script>
+</body>
+</html>

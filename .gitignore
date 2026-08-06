@@ -1,0 +1,21 @@
+# dependencies
+node_modules/
+
+# wrangler local state, build output and caches
+.wrangler/
+dist/
+.dev.vars
+.dev.vars.*
+
+# secrets / env
+.env
+.env.*
+*.local
+
+# logs
+*.log
+npm-debug.log*
+
+# os / editor
+.DS_Store
+Thumbs.db

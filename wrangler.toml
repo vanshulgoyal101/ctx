@@ -1,0 +1,14 @@
+name = "vanshul-ctx"
+main = "src/worker.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Serves the static landing page in public/ for any path that isn't /mcp or /health.
+[assets]
+directory = "./public"
+
+# After first deploy, attach the custom domain in the Cloudflare dashboard, or
+# uncomment (requires the vanshul.com zone to be Active on Cloudflare):
+# [[routes]]
+# pattern = "ctx.vanshul.com"
+# custom_domain = true

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="ctx.vanshul.com — turn a GitHub repo into agent-ready context">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#171826"/>
+      <stop offset="1" stop-color="#0b0c11"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="1" y="1" width="1198" height="628" fill="none" stroke="#262a36" stroke-width="2"/>
+  <text x="80" y="150" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="64">📦</text>
+  <text x="170" y="152" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="44" fill="#a78bfa">ctx.vanshul.com</text>
+  <text x="80" y="300" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="72" font-weight="700" fill="#f2f4f9">A GitHub repo →</text>
+  <text x="80" y="388" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="72" font-weight="700" fill="#a78bfa">agent-ready context</text>
+  <text x="80" y="466" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="34" fill="#949cb0">Pack it, or search it for just the relevant lines — over MCP</text>
+  <text x="80" y="540" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="26" fill="#949cb0">pack_repo · search_context · list_files · get_file</text>
+</svg>
