@@ -1,0 +1,28 @@
+# ctx.vanshul.com
+
+> A public Model Context Protocol (MCP) server that turns a GitHub repo or a docs site into agent-ready context. Pack it into one token-counted blob, or search it for just the relevant passages. Endpoint: https://ctx.vanshul.com/mcp (JSON-RPC 2.0 over Streamable HTTP).
+
+## Tools
+
+- pack_repo: Fetch a GitHub repo and return it as one context blob (binaries/lockfiles/build dirs stripped, token estimate, file manifest). Args: repo, ref?, include?, exclude?, max_tokens?
+- search_context: Return only the repo passages matching a query, each with file, line and score. Args: repo, query, ref?, include?, exclude?, max_matches?, context_chars?
+- list_files: List the text files ctx would include, with byte sizes. Args: repo, ref?, include?, exclude?
+- get_file: Return the full text of a single file by path. Args: repo, path, ref?
+- pack_docs: Crawl a docs site (sitemap-aware) and return each page as clean Markdown, concatenated. Args: url, depth?, max_pages?, max_tokens?
+- search_docs: Crawl a docs site and return only the passages matching a query, with page URL. Args: url, query, depth?, max_pages?, max_matches?, context_chars?
+
+## Connect
+
+- Config: { "mcpServers": { "ctx": { "url": "https://ctx.vanshul.com/mcp" } } }
+- Stdio bridge: npx mcp-remote https://ctx.vanshul.com/mcp
+
+## Notes
+
+- Agent-first alternative to gitingest/repomix: ranked search + MCP, not just a blob.
+- repo input is owner/repo, owner/repo/ref, or a github.com URL.
+- SSRF-safe docs crawling; bounded by depth, page count and size caps.
+
+## Links
+
+- Source: https://github.com/vanshulgoyal101/ctx
+- Sibling: https://mcp.vanshul.com (read the live web as Markdown)

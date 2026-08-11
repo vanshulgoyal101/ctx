@@ -61,6 +61,9 @@ export async function crawlDocs(startUrl: string, opts: CrawlOptions = {}): Prom
   let truncated = false;
   let isStart = true;
 
+  // Seed from the site's sitemap when available — more complete than link-following.
+  await seedFromSitemap(origin, sectionPrefix, visited, queue, maxPages, depth);
+
   while (queue.length && pages.length < maxPages) {
     const { url, d } = queue.shift()!;
     let result: { title: string | null; markdown: string | null; links: string[] };
@@ -154,6 +157,55 @@ export function packDocs(bundle: DocsBundle, maxTokens?: number): DocsPackResult
 function pageSection(page: DocPage): string {
   const title = page.title ? `# ${page.title}\n` : '';
   return `\n==== ${page.url} ====\n${title}${page.markdown.trim()}\n`;
+}
+
+/** Enqueue in-section page URLs listed in the site's sitemap.xml, when present. */
+async function seedFromSitemap(
+  origin: string,
+  prefix: string,
+  visited: Set<string>,
+  queue: Array<{ url: string; d: number }>,
+  maxPages: number,
+  depth: number,
+): Promise<void> {
+  const candidates = prefix ? [`${origin}${prefix}/sitemap.xml`, `${origin}/sitemap.xml`] : [`${origin}/sitemap.xml`];
+  for (const smUrl of candidates) {
+    const xml = await fetchTextSafe(smUrl);
+    if (!xml) continue;
+    let added = 0;
+    for (const loc of parseSitemapLocs(xml)) {
+      if (visited.size > maxPages * 8) break;
+      const norm = normalize(loc);
+      if (visited.has(norm)) continue;
+      if (!inSection(loc, origin, prefix) || ASSET_RE.test(loc)) continue;
+      visited.add(norm);
+      queue.push({ url: loc, d: depth }); // already enumerated — treat as a leaf
+      if (++added >= maxPages * 4) break;
+    }
+    if (added) return; // first sitemap that yielded pages wins
+  }
+}
+
+async function fetchTextSafe(url: string): Promise<string | null> {
+  const check = validateTargetUrl(url);
+  if (!check.ok || !check.url) return null;
+  try {
+    const res = await fetchPage(check.url);
+    if (!res.ok) return null;
+    const ct = res.headers.get('content-type') ?? '';
+    if (ct && !/xml|text|html/.test(ct)) return null;
+    return await readCapped(res, MAX_BYTES);
+  } catch {
+    return null;
+  }
+}
+
+function parseSitemapLocs(xml: string): string[] {
+  const out: string[] = [];
+  const re = /<loc>\s*([^<\s]+)\s*<\/loc>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(xml))) out.push(m[1].replace(/&amp;/g, '&'));
+  return out;
 }
 
 /** The first path segment as a section prefix (`/docs/x` → `/docs`); `` for root. */

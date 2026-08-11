@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { crawlDocs, packDocs, DocsError } from '../src/docs';
 import { searchFiles } from '../src/search';
-import { buildSite } from './site';
+import { buildSite, docPage } from './site';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -59,6 +59,25 @@ describe('crawlDocs', () => {
   it('throws if the start page cannot be fetched', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('nope', { status: 404 })));
     await expect(crawlDocs('https://gone.example/docs/')).rejects.toThrow(DocsError);
+  });
+
+  it('discovers sitemap-listed pages that are not linked (even at depth 0)', async () => {
+    const host = 'sm1.example';
+    const base = `https://${host}`;
+    const sitemap =
+      '<?xml version="1.0" encoding="UTF-8"?><urlset>' +
+      `<url><loc>${base}/docs/z</loc></url>` +
+      `<url><loc>${base}/blog/x</loc></url>` + // out of section — must be ignored
+      '</urlset>';
+    const { fetchImpl } = buildSite(host, {
+      '/sitemap.xml': sitemap,
+      '/docs/z': docPage('Zed', 'A page only listed in the sitemap, not linked from anywhere.'),
+    });
+    vi.stubGlobal('fetch', fetchImpl);
+    const bundle = await crawlDocs(`${base}/docs/`, { depth: 0 }); // depth 0 = no link following
+    const urls = bundle.pages.map((p) => p.url);
+    expect(urls).toContain(`${base}/docs/z`);
+    expect(urls.some((u) => u.includes('/blog/'))).toBe(false);
   });
 });
 

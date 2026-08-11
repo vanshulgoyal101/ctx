@@ -69,13 +69,15 @@ Token estimate is the standard ~4-chars-per-token heuristic — labelled an esti
 ## Crawling docs (`pack_docs` / `search_docs`)
 
 `crawlDocs` does a breadth-first crawl from a start URL, staying within the same
-origin and the start path's top section (e.g. `/docs`). Each page is fetched with
-the SSRF-safe `fetcher` and extracted with `extract` (Readability + Turndown);
-pages with no readable content are skipped but still contribute links. The crawl
-is bounded by `depth` (≤3), `max_pages` (≤30), per-page size, and a 5-minute
-per-isolate cache. Because docs URLs are caller-supplied, every URL and redirect
-hop is re-validated against the SSRF guard — unlike the repo tools, whose URL is
-always a fixed `owner/repo` slug.
+origin and the start path's top section (e.g. `/docs`). It is **sitemap-aware**:
+before link-following it seeds the queue from `sitemap.xml` (trying the section
+sitemap then the root), so it discovers pages that aren't linked from the start
+page. Each page is fetched with the SSRF-safe `fetcher` and extracted with
+`extract` (Readability + Turndown); pages with no readable content are skipped but
+still contribute links. The crawl is bounded by `depth` (≤3), `max_pages` (≤30),
+per-page size, and a 5-minute per-isolate cache. Because docs URLs are
+caller-supplied, every URL and redirect hop is re-validated against the SSRF guard
+— unlike the repo tools, whose URL is always a fixed `owner/repo` slug.
 
 > Dependencies: the repo pipeline is dependency-free; docs extraction pulls in
 > `linkedom`, `@mozilla/readability` and `turndown` (the same stack as `mcp`).

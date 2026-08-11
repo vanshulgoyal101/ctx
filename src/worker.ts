@@ -44,7 +44,9 @@ async function handleMcp(request: Request, env: Env): Promise<Response> {
 
   const ip = request.headers.get('cf-connecting-ip') ?? 'anonymous';
   if (isRateLimited(ip)) {
-    return json(429, rpcError(null, -32000, 'Rate limit exceeded, slow down a little'));
+    return json(429, rpcError(null, -32000, 'Rate limit exceeded, slow down a little'), {
+      'retry-after': String(Math.ceil(RATE_WINDOW_MS / 1000)),
+    });
   }
 
   let payload: unknown;
@@ -84,13 +86,14 @@ function corsHeaders(): Record<string, string> {
     'access-control-allow-methods': 'POST, GET, OPTIONS',
     'access-control-allow-headers': 'content-type, mcp-session-id, mcp-protocol-version',
     'x-content-type-options': 'nosniff',
+    'referrer-policy': 'no-referrer',
   };
 }
 
-function json(status: number, body: unknown): Response {
+function json(status: number, body: unknown, extra: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...corsHeaders() },
+    headers: { 'content-type': 'application/json; charset=utf-8', ...corsHeaders(), ...extra },
   });
 }
 

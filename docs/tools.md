@@ -73,9 +73,11 @@ Crawl a documentation site and return it as one context blob.
 | `max_tokens` | number | no | — | Stop adding pages once the estimate exceeds this. |
 
 The crawl stays within the start URL's **origin and top section** (e.g. everything
-under `/docs`). Each page is extracted to Markdown; pages with no readable content
-are skipped but still contribute links. Output: a header (start URL + page
-manifest) then one `==== <page url> ====` section per page.
+under `/docs`). It is **sitemap-aware**: if the site publishes `sitemap.xml`, the
+in-section URLs it lists are crawled too (more complete than link-following alone).
+Each page is extracted to Markdown; pages with no readable content are skipped but
+still contribute links. Output: a header (start URL + page manifest) then one
+`==== <page url> ====` section per page.
 
 ### `search_docs`
 Crawl a docs site and return only the passages matching a query.
